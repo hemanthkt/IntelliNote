@@ -18,6 +18,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const db_1 = require("./db");
 const middleware_1 = require("./middleware");
+const utils_1 = require("./utils");
 mongoose_1.default.connect("mongodb+srv://hmkt:12345@cluster0.lue3xn6.mongodb.net/IntelliNote?retryWrites=true&w=majority&appName=Cluster0");
 app.use(express_1.default.json());
 const JWT_PASSWORD = "12345";
@@ -87,22 +88,59 @@ app.delete("/api/v1/content", middleware_1.userMiddleware, (req, res) => __await
         userId: req.userId
     });
 }));
-app.post("/api/v1/share", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const contentId = req.body.contentId;
-    try {
-        const content = yield db_1.ContentModel.findById({
-            contentId
+app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const share = req.body.share;
+    const hash = (0, utils_1.random)(10);
+    if (share) {
+        const existingLink = yield db_1.LinksModel.findOne({
+            userId: req.userId
         });
-        res.json({
-            content
+        if (existingLink) {
+            res.json({
+                hash: existingLink.hash
+            });
+            return;
+        }
+        yield db_1.LinksModel.create({
+            userId: req.userId,
+            hash: hash
         });
     }
-    catch (error) {
-        res.json({
-            message: "Couldnt share your thought"
+    else {
+        yield db_1.LinksModel.deleteOne({
+            userId: req.userId
         });
     }
+    res.json({
+        message: "/share/" + hash
+    });
 }));
-app.delete("/api/v1/content", (req, res) => {
-});
+app.get("/api/v1/brain/:shareLink", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const hash = req.params.shareLink;
+    const link = yield db_1.LinksModel.findOne({
+        hash
+    });
+    if (!link) {
+        res.json({
+            message: "Link in invalid"
+        });
+        return;
+    }
+    const user = yield db_1.UserModel.findOne({
+        _id: link.userId
+    });
+    if (!user) {
+        res.status(411).json({
+            message: "Error ideally should not occur"
+        });
+        return;
+    }
+    const content = yield db_1.ContentModel.find({
+        userId: link.userId
+    });
+    res.json({
+        username: user.username,
+        content
+    });
+}));
 app.listen(3000);
