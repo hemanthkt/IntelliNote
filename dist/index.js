@@ -22,6 +22,8 @@ const utils_1 = require("./utils");
 mongoose_1.default.connect("mongodb+srv://hmkt:12345@cluster0.lue3xn6.mongodb.net/IntelliNote?retryWrites=true&w=majority&appName=Cluster0");
 app.use(express_1.default.json());
 const JWT_PASSWORD = "12345";
+const cors_1 = __importDefault(require("cors"));
+app.use((0, cors_1.default)());
 app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, password } = req.body;
     try {
@@ -57,6 +59,7 @@ app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter
     yield db_1.ContentModel.create({
         link,
         type,
+        title: req.body.title,
         // @ts-ignore
         userId: req.userId,
         tags: []

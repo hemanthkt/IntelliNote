@@ -17,7 +17,8 @@ import { random } from "./utils";
 mongoose.connect("mongodb+srv://hmkt:12345@cluster0.lue3xn6.mongodb.net/IntelliNote?retryWrites=true&w=majority&appName=Cluster0")
 app.use(express.json());
 const JWT_PASSWORD = "12345"
-
+import cors from "cors"
+app.use(cors())
 
 app.post("/api/v1/signup",async (req, res) => {
     const {username, password} = req.body
@@ -60,10 +61,11 @@ app.post("/api/v1/signin",async (req, res) => {
 
 app.post("/api/v1/content",userMiddleware ,async (req, res) => {
    const {type, link} = req.body
-   await ContentModel.create({
+await ContentModel.create({
     
     link, 
     type, 
+    title:req.body.title,
     // @ts-ignore
     userId: req.userId,
     tags: []
@@ -83,7 +85,7 @@ app.get("/api/v1/content",userMiddleware, async(req, res) => {
             userId: userId
         }).populate("userId","username")
         res.json(
-            allContent
+             allContent
         )
     }else{
         res.json({
